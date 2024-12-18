@@ -40,6 +40,7 @@ STATE_PWM = -1
 class DisplayDriver:
     _INVON = 0x21
     _INVOFF = 0x20
+
     _ORIENTATION_TABLE = (
         _MADCTL_MX,
         _MADCTL_MV,
@@ -565,9 +566,6 @@ class DisplayDriver:
             (y2 - y1 + 1) *
             lv.color_format_get_size(self._color_space)
         )
-
-        if isinstance(self._data_bus, lcd_bus.RGBBus) and self._rotation>0:
-            y2+=1
 
         cmd = self._set_memory_location(x1, y1, x2, y2)
 

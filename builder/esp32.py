@@ -155,7 +155,7 @@ def get_espidf():
         ]
     ]
     print()
-    print(f'collecting ESP-IDF v{IDF_VER}')
+    print(f'collecting ESP-IDF v5.2.3')
     print('this might take a while...')
     result, _ = spawn(cmd, spinner=True)
     if result != 0:
@@ -889,7 +889,7 @@ def submodules():
         ['./install.sh', 'all']
     ]
 
-    print(f'setting up ESP-IDF v{IDF_VER}')
+    print(f'setting up ESP-IDF v5.2.3')
     print('this might take a while...')
     env = {k: v for k, v in os.environ.items()}
     env['IDF_PATH'] = os.path.abspath(idf_path)
@@ -910,7 +910,22 @@ def submodules():
     berkeley_db = os.path.abspath('lib/micropython/lib/berkeley-db-1.xx/README')
 
     if not os.path.exists(berkeley_db) or not os.path.exists(wifi_lib):
-        cmds.append(submodules_cmd)
+        cmds.append(['cd lib/micropython'])
+        for dep in (
+            'tinyusb',
+            'micropython-lib',
+            'protobuf-c',
+            'wiznet5k',
+            'lwip',
+            'mbedtls',
+            'axtls',
+            'berkeley-db-1.xx',
+            'btstack'
+        ):
+            path = f"lib/{dep}"
+
+            cmds.append([f'git submodule sync {path}'])
+            cmds.append([f'git submodule update --init --depth=1 {path}'])
 
         return_code, _ = spawn(cmds, env=env)
         if return_code != 0:
@@ -1219,7 +1234,8 @@ def build_sdkconfig(*args):
         if not os.path.exists(display_path):
             continue
 
-        base_config.extend(read_file(display_path).split('\n'))
+        with open(display_path, 'r') as f:
+            base_config.extend(f.read().split('\n'))
 
     with open(SDKCONFIG_PATH, 'w') as f:
         f.write('\n'.join(base_config))
