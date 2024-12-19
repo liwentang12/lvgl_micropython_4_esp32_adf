@@ -142,6 +142,19 @@ static mp_obj_t machine_sdcard_make_new(const mp_obj_type_t *type, size_t n_args
         ARG_spi_bus,
         ARG_cs,
         ARG_freq,
+#ifdef SOC_SDMMC_USE_GPIO_MATRIX
+        ARG_clk,
+        ARG_cmd,
+        ARG_d0,
+        ARG_d1,
+        ARG_d2,
+        ARG_d3,
+        ARG_d4,
+        ARG_d5,
+        ARG_d6,
+        ARG_d7,
+#endif /*SOC_SDMMC_USE_GPIO_MATRIX*/
+
     };
 
     static const mp_arg_t make_new_args[] = {
@@ -154,6 +167,20 @@ static mp_obj_t machine_sdcard_make_new(const mp_obj_type_t *type, size_t n_args
         { MP_QSTR_cs,       MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = -1} },
         // freq is valid for both SPI and SDMMC interfaces
         { MP_QSTR_freq,     MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 20000000} },
+
+    #ifdef SOC_SDMMC_USE_GPIO_MATRIX
+        { MP_QSTR_clk,      MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int =  -1} },
+        { MP_QSTR_cmd,      MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int =  -1} },
+        { MP_QSTR_d0,       MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int =  -1} },
+        { MP_QSTR_d1,       MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int =  -1} },
+        { MP_QSTR_d2,       MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int =  -1} },
+        { MP_QSTR_d3,       MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int =  -1} },
+        { MP_QSTR_d4,       MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int =  -1} },
+        { MP_QSTR_d5,       MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int =  -1} },
+        { MP_QSTR_d6,       MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int =  -1} },
+        { MP_QSTR_d7,       MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int =  -1} },
+    #endif /*SOC_SDMMC_USE_GPIO_MATRIX*/
+
     };
 
     mp_arg_val_t args[MP_ARRAY_SIZE(make_new_args)];
@@ -227,6 +254,30 @@ static mp_obj_t machine_sdcard_make_new(const mp_obj_type_t *type, size_t n_args
     } else {
         // SD/MMC interface
         sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
+#ifdef SOC_SDMMC_USE_GPIO_MATRIX
+//        SET_CONFIG_PIN(slot_config, clk, ARG_clk);
+//        SET_CONFIG_PIN(slot_config, cmd, ARG_cmd);
+//        SET_CONFIG_PIN(slot_config, d0,  ARG_d0);
+//        SET_CONFIG_PIN(slot_config, d1,  ARG_d1);
+//        SET_CONFIG_PIN(slot_config, d2,  ARG_d2);
+//        SET_CONFIG_PIN(slot_config, d3,  ARG_d3);
+//        SET_CONFIG_PIN(slot_config, d4,  ARG_d4);
+//        SET_CONFIG_PIN(slot_config, d5,  ARG_d5);
+//        SET_CONFIG_PIN(slot_config, d6,  ARG_d6);
+//        SET_CONFIG_PIN(slot_config, d7,  ARG_d7);
+
+        slot_config.clk = (int)args[ARG_clk].u_int;
+        slot_config.cmd = (int)args[ARG_cmd].u_int;
+        slot_config.d0 = (int)args[ARG_d0].u_int;
+        slot_config.d1 = (int)args[ARG_d1].u_int;
+        slot_config.d2 = (int)args[ARG_d2].u_int;
+        slot_config.d3 = (int)args[ARG_d3].u_int;
+        slot_config.d4 = (int)args[ARG_d4].u_int;
+        slot_config.d5 = (int)args[ARG_d5].u_int;
+        slot_config.d6 = (int)args[ARG_d6].u_int;
+        slot_config.d7 = (int)args[ARG_d7].u_int;
+
+#endif /*SOC_SDMMC_USE_GPIO_MATRIX*/
 
         // Stronger external pull-ups are still needed but apparently
         // it is a good idea to set the internal pull-ups anyway.
@@ -240,6 +291,9 @@ static mp_obj_t machine_sdcard_make_new(const mp_obj_type_t *type, size_t n_args
         } else {
             mp_raise_ValueError(MP_ERROR_TEXT("width must be 1 or 4 (or 8 on slot 0)"));
         }
+
+        ESP_LOGE("LWT", "slot_config(clk=%u, cmd=%u, d0=%u, d1=%u), slot:%d",
+                (unsigned int)slot_config.clk, (unsigned int)slot_config.cmd, (unsigned int)slot_config.d0, (unsigned int)slot_config.d1, self->host.slot);
 
         check_esp_err(sdmmc_host_init_slot(self->host.slot, &slot_config));
     }
